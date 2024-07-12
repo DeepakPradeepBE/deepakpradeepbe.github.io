@@ -1,23 +1,22 @@
-date_pattern = re.compile(r'^\d{8}$')
+import os
+import base64
 
-date_folders = [folder for folder in folders if date_pattern.search(folder.split('/')[-1])]
+def decode_file(enc_file_path, txt_file_path):
+    with open(enc_file_path, 'rb') as enc_file:
+        encoded_data = enc_file.read()
+    
+    decoded_data = base64.b64decode(encoded_data)
+    
+    with open(txt_file_path, 'wb') as txt_file:
+        txt_file.write(decoded_data)
 
-date_folders.sort()
+def convert_enc_to_txt_in_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        if filename.endswith('.enc'):
+            enc_file_path = os.path.join(folder_path, filename)
+            txt_file_path = os.path.splitext(enc_file_path)[0] + '.txt'
+            decode_file(enc_file_path, txt_file_path)
+            print(f'Converted {enc_file_path} to {txt_file_path}')
 
-# Check if there are more than 3 folders
-if len(date_folders) > 3:
-    # Get the folders to delete, which are all except the latest 3
-    folders_to_delete = date_folders[:-3]
-
-    for folder in folders_to_delete:
-        # List objects within the folder
-        objects_to_delete = s3.list_objects_v2(Bucket=bucket_name, Prefix=f'{folder}/')
-
-        # Delete all objects within the folder
-        delete_objects = [{'Key': obj['Key']} for obj in objects_to_delete.get('Contents', [])]
-        if delete_objects:
-            s3.delete_objects(Bucket=bucket_name, Delete={'Objects': delete_objects})
-
-        print(f"Deleted folder: {folder}")
-else:
-    print("No folder to delete. There are 3 or fewer folders.")
+folder_path = 'test_folders'
+convert_enc_to_txt_in_folder(folder_path)
